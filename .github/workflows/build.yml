@@ -14,6 +14,8 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -26,21 +28,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Electron app on Windows
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: npx electron-builder --win
-
-      - name: Build Electron app on Linux
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        run: npx electron-builder --linux
-
-      - name: Build Electron app on macOS
-        if: matrix.os == 'macos-latest'
-        shell: bash
-        run: npx electron-builder --mac
-
       - name: Generate Tag Name
         if: matrix.os == 'ubuntu-latest'
         id: generate_tag
@@ -48,34 +35,23 @@ jobs:
         run: |
           DATE=$(date +%Y-%m-%d-%H-%M-%S)
           TAG="v1.0.0-$DATE"
-          echo "tag_name=$TAG" >> $GITHUB_OUTPUT
-
-      - name: Push Git Tag
-        if: matrix.os == 'ubuntu-latest'
-        run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git tag ${{ steps.generate_tag.outputs.tag_name }}
-          git push origin ${{ steps.generate_tag.outputs.tag_name }}
+          git tag $TAG
+          git push origin $TAG
+          echo "TAG_NAME=$TAG" >> $GITHUB_ENV
+
+      - name: Build Electron app on Windows
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: npx electron-builder --win --publish always --publish-target github:$env:TAG_NAME
+
+      - name: Build Electron app on Linux
+        if: matrix.os == 'ubuntu-latest'
         shell: bash
+        run: npx electron-builder --linux --publish always --publish-target github:$TAG_NAME
 
-      - name: Create GitHub Release
-        if: matrix.os == 'ubuntu-latest'
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.generate_tag.outputs.tag_name }}
-          release_name: ${{ steps.generate_tag.outputs.tag_name }}
-          draft: false
-          prerelease: false
-
-      - name: Upload Artifacts to Release
-        if: matrix.os == 'ubuntu-latest'
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.generate_tag.outputs.tag_name }}
-          files: dist/*
+      - name: Build Electron app on macOS
+        if: matrix.os == 'macos-latest'
+        shell: bash
+        run: npx electron-builder --mac --publish always --publish-target github:$TAG_NAME
