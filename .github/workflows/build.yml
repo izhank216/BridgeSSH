@@ -9,13 +9,35 @@ on:
   workflow_dispatch:
 
 jobs:
+  create_tag:
+    runs-on: ubuntu-latest
+    outputs:
+      TAG_NAME: ${{ steps.generate_tag.outputs.TAG_NAME }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Generate Tag Name
+        id: generate_tag
+        shell: bash
+        run: |
+          DATE=$(date +%Y-%m-%d-%H-%M-%S)
+          TAG="v1.0.1-$DATE"
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag $TAG
+          git push origin $TAG
+          echo "::set-output name=TAG_NAME::$TAG"
+
   build:
+    needs: create_tag
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG_NAME: ${{ needs.create_tag.outputs.TAG_NAME }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -27,19 +49,6 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-
-      - name: Generate Tag Name
-        if: matrix.os == 'ubuntu-latest'
-        id: generate_tag
-        shell: bash
-        run: |
-          DATE=$(date +%Y-%m-%d-%H-%M-%S)
-          TAG="v1.0.0-$DATE"
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git tag $TAG
-          git push origin $TAG
-          echo "TAG_NAME=$TAG" >> $GITHUB_ENV
 
       - name: Build Electron app on Windows
         if: matrix.os == 'windows-latest'
