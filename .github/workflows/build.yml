@@ -42,19 +42,16 @@ jobs:
         run: npx electron-builder --mac
 
       - name: Generate Tag Name
+        if: matrix.os == 'ubuntu-latest'
         id: generate_tag
-        shell: ${{ matrix.os == 'windows-latest' && 'pwsh' || 'bash' }}
+        shell: bash
         run: |
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            $DATE = Get-Date -Format "yyyy-MM-dd-HH-mm-ss"
-            $TAG = "v1.0.0-$DATE"
-            echo "tag_name=$TAG" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8
-          else
-            DATE=$(date +%Y-%m-%d-%H-%M-%S)
-            TAG="v1.0.0-$DATE"
-            echo "tag_name=$TAG" >> $GITHUB_OUTPUT
+          DATE=$(date +%Y-%m-%d-%H-%M-%S)
+          TAG="v1.0.0-$DATE"
+          echo "tag_name=$TAG" >> $GITHUB_OUTPUT
 
       - name: Push Git Tag
+        if: matrix.os == 'ubuntu-latest'
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
@@ -63,6 +60,7 @@ jobs:
         shell: bash
 
       - name: Create GitHub Release
+        if: matrix.os == 'ubuntu-latest'
         id: create_release
         uses: actions/create-release@v1
         env:
@@ -74,6 +72,7 @@ jobs:
           prerelease: false
 
       - name: Upload Artifacts to Release
+        if: matrix.os == 'ubuntu-latest'
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
