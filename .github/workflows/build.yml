@@ -6,7 +6,7 @@ permissions:
 on:
   push:
     branches: [main]
-  workflow_dispatch:  # allows manual run
+  workflow_dispatch:
 
 jobs:
   build:
@@ -41,21 +41,27 @@ jobs:
         shell: bash
         run: npx electron-builder --mac
 
-      - name: Create Tag v1.0.0
+      - name: Set Tag Name
         id: tag
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          TAG="v1.0.0-$DATE"
+          echo "tag_name=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Create Git Tag
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git tag v1.0.0 || echo "Tag already exists"
-          git push origin v1.0.0
+          git tag ${{ steps.tag.outputs.tag_name }} || echo "Tag already exists"
+          git push origin ${{ steps.tag.outputs.tag_name }}
         shell: bash
 
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
         with:
-          tag_name: v1.0.0
-          release_name: v1.0.0
+          tag_name: ${{ steps.tag.outputs.tag_name }}
+          release_name: ${{ steps.tag.outputs.tag_name }}
           draft: false
           prerelease: false
 
