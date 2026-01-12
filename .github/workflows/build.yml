@@ -43,7 +43,7 @@ jobs:
 
       - name: Set Tag Name
         id: tag_unix
-        if: ${{ matrix.os != 'ubuntu-latest' && matrix.os != 'macos-latest' }}
+        if: matrix.os == 'windows-latest'
         run: |
           DATE=$(date +%Y-%m-%d-%H-%M-%S)
           TAG="v1.0.0-$DATE"
@@ -52,7 +52,7 @@ jobs:
       - name: Set Tag Name on Windows
         id: tag_windows
         shell: pwsh
-        if: matrix.os == 'windows-latest'
+        if: ${{ matrix.os != 'ubuntu-latest' && matrix.os != 'macos-latest' }}
         run: |
              $DATE = Get-Date -Format "yyyy-MM-dd-HH-mm-ss"
               $TAG = "v1.0.0-$DATE"
