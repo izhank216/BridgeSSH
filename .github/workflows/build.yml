@@ -72,8 +72,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.tag.outputs.tag_name }}
-          release_name: ${{ steps.tag.outputs.tag_name }}
+          tag_name: ${{ steps.tag.outputs.tag_unix }}${{ steps.tag.outputs.tag_windows }}
+          release_name: ${{ steps.tag.outputs.tag_unix }}${{ steps.tag.outputs.tag_windows }}
           draft: false
           prerelease: false
 
