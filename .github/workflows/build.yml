@@ -12,22 +12,28 @@ jobs:
   create_tag:
     runs-on: ubuntu-latest
     outputs:
-      TAG_NAME: ${{ steps.generate_tag.outputs.TAG_NAME }}
+      TAG_NAME: ${{ steps.set_tag.outputs.TAG_NAME }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Generate Tag Name
-        id: generate_tag
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Generate Tag and Update package.json
+        id: set_tag
         shell: bash
         run: |
           DATE=$(date +%Y-%m-%d-%H-%M-%S)
-          TAG="v1.0.1-$DATE"
+          TAG="v1.0.0-$DATE"
+          # Update package.json version
+          jq ".version = \"$TAG\"" package.json > package.tmp.json && mv package.tmp.json package.json
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git tag $TAG
           git push origin $TAG
           echo "::set-output name=TAG_NAME::$TAG"
+          echo "TAG_NAME=$TAG" >> $GITHUB_ENV
 
   build:
     needs: create_tag
