@@ -42,11 +42,21 @@ jobs:
         run: npx electron-builder --mac
 
       - name: Set Tag Name
-        id: tag
+        id: tag_unix
+        if: ${{ matrix.os != 'ubuntu-latest' && matrix.os != 'macos-latest' }}
         run: |
           DATE=$(date +%Y-%m-%d-%H-%M-%S)
           TAG="v1.0.0-$DATE"
           echo "tag_name=$TAG" >> $GITHUB_OUTPUT
+          
+      - name: Set Tag Name on Windows
+        id: tag_windows
+        shell: pwsh
+        if: matrix.os == 'windows-latest'
+        run: |
+             $DATE = Get-Date -Format "yyyy-MM-dd-HH-mm-ss"
+              $TAG = "v1.0.0-$DATE"
+              echo "tag_name=$TAG" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
       - name: Create Git Tag
         run: |
