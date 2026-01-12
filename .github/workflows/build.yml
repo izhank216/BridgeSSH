@@ -44,14 +44,14 @@ jobs:
       - name: Build Electron app on Windows
         if: matrix.os == 'windows-latest'
         shell: pwsh
-        run: npx electron-builder --win --publish always --publish-target github:$env:TAG_NAME
+        run: npx electron-builder --win --publish always
 
       - name: Build Electron app on Linux
         if: matrix.os == 'ubuntu-latest'
         shell: bash
-        run: npx electron-builder --linux --publish always --publish-target github:$TAG_NAME
+        run: npx electron-builder --linux --publish always
 
       - name: Build Electron app on macOS
         if: matrix.os == 'macos-latest'
         shell: bash
-        run: npx electron-builder --mac --publish always --publish-target github:$TAG_NAME
+        run: npx electron-builder --mac --publish always
