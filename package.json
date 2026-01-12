@@ -26,6 +26,7 @@
     "mac": { "target": "dmg" },
     "win": { "target": "nsis" },
     "linux": { "target": "AppImage" },
+    "publish": null,
     "nsis": {
       "oneClick": false,
       "perMachine": false,
