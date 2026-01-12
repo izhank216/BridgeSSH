@@ -8,35 +8,30 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [windows, linux, mac]
-
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: 20
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
 
-    - name: Install dependencies
-      run: npm install
+      - run: npm ci
 
-    - name: Build Electron app
-      run: |
-        if [ "${{ matrix.os }}" == "windows" ]; then
-          npx electron-builder --win
-        elif [ "${{ matrix.os }}" == "linux" ]; then
-          npx electron-builder --linux
-        elif [ "${{ matrix.os }}" == "mac" ]; then
-          npx electron-builder --mac
-        fi
+      - name: Build Electron
+        run: |
+          if [[ "${{ matrix.os }}" == *"windows"* ]]; then
+            npx electron-builder --win
+          elif [[ "${{ matrix.os }}" == *"ubuntu"* ]]; then
+            npx electron-builder --linux
+          elif [[ "${{ matrix.os }}" == *"macos"* ]]; then
+            npx electron-builder --mac
+          fi
 
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: BridgeSSH-${{ matrix.os }}
-        path: dist/
+      - uses: actions/upload-artifact@v3
+        with:
+          name: BridgeSSH-${{ matrix.os }}
+          path: dist/
