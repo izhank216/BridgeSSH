@@ -41,29 +41,25 @@ jobs:
         shell: bash
         run: npx electron-builder --mac
 
-      - name: Set Tag Name
-        id: tag_unix
-        if: matrix.os == 'windows-latest'
+      - name: Generate Tag Name
+        id: generate_tag
+        shell: ${{ matrix.os == 'windows-latest' && 'pwsh' || 'bash' }}
         run: |
-          DATE=$(date +%Y-%m-%d-%H-%M-%S)
-          TAG="v1.0.0-$DATE"
-          echo "tag_name=$TAG" >> $GITHUB_OUTPUT
-          
-      - name: Set Tag Name on Windows
-        id: tag_windows
-        shell: pwsh
-        if: ${{ matrix.os != 'ubuntu-latest' && matrix.os != 'macos-latest' }}
-        run: |
-             $DATE = Get-Date -Format "yyyy-MM-dd-HH-mm-ss"
-              $TAG = "v1.0.0-$DATE"
-              echo "tag_name=$TAG" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            $DATE = Get-Date -Format "yyyy-MM-dd-HH-mm-ss"
+            $TAG = "v1.0.0-$DATE"
+            echo "tag_name=$TAG" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8
+          else
+            DATE=$(date +%Y-%m-%d-%H-%M-%S)
+            TAG="v1.0.0-$DATE"
+            echo "tag_name=$TAG" >> $GITHUB_OUTPUT
 
-      - name: Create Git Tag
+      - name: Push Git Tag
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git tag ${{ steps.tag.outputs.tag_name }}
-          git push origin ${{ steps.tag.outputs.tag_name }}
+          git tag ${{ steps.generate_tag.outputs.tag_name }}
+          git push origin ${{ steps.generate_tag.outputs.tag_name }}
         shell: bash
 
       - name: Create GitHub Release
@@ -72,8 +68,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.tag.outputs.tag_unix }}${{ steps.tag.outputs.tag_windows }}
-          release_name: ${{ steps.tag.outputs.tag_unix }}${{ steps.tag.outputs.tag_windows }}
+          tag_name: ${{ steps.generate_tag.outputs.tag_name }}
+          release_name: ${{ steps.generate_tag.outputs.tag_name }}
           draft: false
           prerelease: false
 
@@ -82,5 +78,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.tag.outputs.tag_name }}
+          tag_name: ${{ steps.generate_tag.outputs.tag_name }}
           files: dist/*
