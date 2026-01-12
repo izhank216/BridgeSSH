@@ -44,7 +44,7 @@ jobs:
       - name: Set Tag Name
         id: tag
         run: |
-          DATE=$(date +%Y-%m-%d)
+          DATE=$(date +%Y-%m-%d-%H-%M-%S)
           TAG="v1.0.0-$DATE"
           echo "tag_name=$TAG" >> $GITHUB_OUTPUT
 
