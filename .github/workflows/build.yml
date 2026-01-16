@@ -14,31 +14,74 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: npm install
+      - run: npm install
 
-      - name: Build Electron app on Windows
+      - name: Build (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
-        run: npx electron-builder --win --publish always
+        run: npx electron-builder --win
 
-      - name: Build Electron app on Linux
+      - name: Build (Linux)
         if: matrix.os == 'ubuntu-latest'
         shell: bash
-        run: npx electron-builder --linux --publish always
+        run: npx electron-builder --linux
 
-      - name: Build Electron app on macOS
+      - name: Build (macOS)
         if: matrix.os == 'macos-latest'
         shell: bash
-        run: npx electron-builder --mac --publish always
+        run: npx electron-builder --mac
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: BridgeSSH-${{ matrix.os }}
+          path: |
+            dist/*.exe
+            dist/*.msi
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.rpm
+            dist/*.dmg
+            dist/*.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Generate tag
+        id: tag
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          DATE=$(date -u +'%Y%m%d-%H%M%S')
+          TAG="v${VERSION}-${DATE}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Create git tag
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag ${{ steps.tag.outputs.tag }}
+          git push origin ${{ steps.tag.outputs.tag }}
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: BridgeSSH ${{ steps.tag.outputs.tag }}
+          files: artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
