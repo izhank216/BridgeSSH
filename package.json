@@ -22,7 +22,6 @@
     "appId": "com.izhan.bridgessh",
     "productName": "BridgeSSH",
     "files": ["**/*"],
-    "directories": { "buildResources": "renderer" },
     "mac": { "target": "dmg" },
     "win": { "target": "nsis" },
     "linux": { "target": "AppImage" },
