@@ -1,5 +1,4 @@
-import { Terminal } from '@xterm/xterm'
-import '@xterm/css/xterm.css'
+
 
 const term = new Terminal({
   fontFamily: "'Ubuntu Mono', monospace",
